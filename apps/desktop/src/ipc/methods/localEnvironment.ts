@@ -1,6 +1,8 @@
 import * as Effect from "effect/Effect";
+import * as FileSystem from "effect/FileSystem";
 import * as Schema from "effect/Schema";
 
+import * as DesktopEnvironment from "../../app/DesktopEnvironment.ts";
 import * as DesktopLifecycle from "../../app/DesktopLifecycle.ts";
 import * as DesktopAppSettings from "../../settings/DesktopAppSettings.ts";
 import * as IpcChannels from "../channels.ts";
@@ -12,6 +14,24 @@ export const getLocalEnvironmentEnabled = makeSyncIpcMethod({
   handler: Effect.fn("desktop.ipc.localEnvironment.getEnabled")(function* () {
     const appSettings = yield* DesktopAppSettings.DesktopAppSettings;
     return (yield* appSettings.get).localEnvironmentEnabled;
+  }),
+});
+
+export const getHomeEnvironmentId = makeSyncIpcMethod({
+  channel: IpcChannels.GET_HOME_ENVIRONMENT_ID_CHANNEL,
+  result: Schema.NullOr(Schema.String),
+  handler: Effect.fn("desktop.ipc.localEnvironment.getHomeEnvironmentId")(function* () {
+    const environment = yield* DesktopEnvironment.DesktopEnvironment;
+    const fileSystem = yield* FileSystem.FileSystem;
+    // The server's environment identity file (apps/server/src/config.ts), absent
+    // until a server has started on this home.
+    const id = yield* fileSystem
+      .readFileString(environment.path.join(environment.stateDir, "environment-id"))
+      .pipe(
+        Effect.map((raw) => raw.trim()),
+        Effect.orElseSucceed(() => ""),
+      );
+    return id.length > 0 ? id : null;
   }),
 });
 

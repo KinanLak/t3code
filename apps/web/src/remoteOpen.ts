@@ -15,6 +15,7 @@ import { isDesktopLocalConnectionTarget } from "~/connection/desktopLocal";
 import { isLoopbackHostname } from "~/environments/primary/target";
 import { useLocalStorage } from "~/hooks/useLocalStorage";
 import { environmentPresentations } from "~/state/presentation";
+import { desktopHomeEnvironmentIdAtom } from "~/state/primaryEnvironment";
 
 export interface RemoteOpenHost {
   readonly kind: "ssh-alias" | RemoteOpenTarget["kind"];
@@ -53,9 +54,10 @@ export function resolveRemoteOpenState(input: {
   readonly sshAlias: string | null;
   readonly remoteOpenTargets: ReadonlyArray<RemoteOpenTarget> | undefined;
   readonly isDesktopRenderer: boolean;
+  readonly desktopHomeEnvironmentId: EnvironmentId | null;
 }): RemoteOpenState {
   const { target } = input;
-  if (target === null) {
+  if (target === null || target.environmentId === input.desktopHomeEnvironmentId) {
     return LOCAL_EXEC;
   }
   if (target._tag === "PrimaryConnectionTarget") {
@@ -106,6 +108,7 @@ const remoteOpenResolutionAtom = Atom.family((environmentId: EnvironmentId) =>
           profile !== null && profile._tag === "SshConnectionProfile" ? profile.target.alias : null,
         remoteOpenTargets: presentation?.serverConfig?.remoteOpenTargets,
         isDesktopRenderer: window.desktopBridge !== undefined,
+        desktopHomeEnvironmentId: get(desktopHomeEnvironmentIdAtom),
       }),
       isResolved: true,
     };
