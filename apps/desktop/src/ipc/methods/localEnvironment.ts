@@ -24,12 +24,19 @@ export const getHomeEnvironmentId = makeSyncIpcMethod({
     const environment = yield* DesktopEnvironment.DesktopEnvironment;
     // The server's environment identity file (apps/server/src/config.ts), absent
     // until a server has started on this home. Sync IPC handlers run under
-    // Effect.runSync, so the read must not suspend.
+    // Effect.runSync, so the read must not suspend, and must not fail either: a
+    // failed sync handler never sets returnValue and leaves the renderer blocked.
     const id = yield* DesktopPreReadyFileSystem.make
       .readFileString(environment.path.join(environment.stateDir, "environment-id"))
       .pipe(
         Effect.map((raw) => raw.trim()),
-        Effect.orElseSucceed(() => ""),
+        Effect.catch((error) =>
+          error.reason._tag === "NotFound"
+            ? Effect.succeed("")
+            : Effect.logWarning("Could not read the home environment ID.", { error }).pipe(
+                Effect.as(""),
+              ),
+        ),
       );
     return id.length > 0 ? id : null;
   }),
