@@ -12,6 +12,7 @@ import * as DesktopState from "../../app/DesktopState.ts";
 import * as ElectronApp from "../../electron/ElectronApp.ts";
 import * as ElectronTheme from "../../electron/ElectronTheme.ts";
 import * as DesktopAppSettings from "../../settings/DesktopAppSettings.ts";
+import * as DesktopIpc from "../DesktopIpc.ts";
 import * as DesktopWindow from "../../window/DesktopWindow.ts";
 import {
   getHomeEnvironmentId,
@@ -71,19 +72,35 @@ describe("local environment IPC", () => {
       const fileSystem = yield* FileSystem.FileSystem;
       const path = yield* Path.Path;
       const stateDir = yield* fileSystem.makeTempDirectoryScoped();
-      const readHomeEnvironmentId = getHomeEnvironmentId.handler().pipe(
-        Effect.provideService(
-          DesktopEnvironment.DesktopEnvironment,
-          DesktopEnvironment.DesktopEnvironment.of({
-            path,
-            stateDir,
-          } as unknown as DesktopEnvironment.DesktopEnvironment["Service"]),
-        ),
-      );
+      let listener: DesktopIpc.DesktopIpcSyncListener | undefined;
+      // Registered through the real sync IPC path, which replies via Effect.runSync.
+      yield* DesktopIpc.make({
+        removeHandler: () => {},
+        handle: () => {},
+        removeAllListeners: () => {},
+        on: (_channel, registered) => {
+          listener = registered;
+        },
+      })
+        .handleSync(getHomeEnvironmentId)
+        .pipe(
+          Effect.provideService(
+            DesktopEnvironment.DesktopEnvironment,
+            DesktopEnvironment.DesktopEnvironment.of({
+              path,
+              stateDir,
+            } as unknown as DesktopEnvironment.DesktopEnvironment["Service"]),
+          ),
+        );
+      const readHomeEnvironmentId = () => {
+        const event = { returnValue: undefined as unknown };
+        listener?.(event);
+        return event.returnValue;
+      };
 
-      assert.isNull(yield* readHomeEnvironmentId);
+      assert.isNull(readHomeEnvironmentId());
       yield* fileSystem.writeFileString(path.join(stateDir, "environment-id"), "env-home-1\n");
-      assert.strictEqual(yield* readHomeEnvironmentId, "env-home-1");
+      assert.strictEqual(readHomeEnvironmentId(), "env-home-1");
     }).pipe(Effect.scoped, Effect.provide(NodeServices.layer)),
   );
 });

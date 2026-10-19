@@ -1,9 +1,9 @@
 import * as Effect from "effect/Effect";
-import * as FileSystem from "effect/FileSystem";
 import * as Schema from "effect/Schema";
 
 import * as DesktopEnvironment from "../../app/DesktopEnvironment.ts";
 import * as DesktopLifecycle from "../../app/DesktopLifecycle.ts";
+import * as DesktopPreReadyFileSystem from "../../app/DesktopPreReadyFileSystem.ts";
 import * as DesktopAppSettings from "../../settings/DesktopAppSettings.ts";
 import * as IpcChannels from "../channels.ts";
 import { makeIpcMethod, makeSyncIpcMethod } from "../DesktopIpc.ts";
@@ -22,10 +22,10 @@ export const getHomeEnvironmentId = makeSyncIpcMethod({
   result: Schema.NullOr(Schema.String),
   handler: Effect.fn("desktop.ipc.localEnvironment.getHomeEnvironmentId")(function* () {
     const environment = yield* DesktopEnvironment.DesktopEnvironment;
-    const fileSystem = yield* FileSystem.FileSystem;
     // The server's environment identity file (apps/server/src/config.ts), absent
-    // until a server has started on this home.
-    const id = yield* fileSystem
+    // until a server has started on this home. Sync IPC handlers run under
+    // Effect.runSync, so the read must not suspend.
+    const id = yield* DesktopPreReadyFileSystem.make
       .readFileString(environment.path.join(environment.stateDir, "environment-id"))
       .pipe(
         Effect.map((raw) => raw.trim()),
