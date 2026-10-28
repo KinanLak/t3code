@@ -1001,7 +1001,7 @@ export default function FilePreviewPanel({
   const [wordWrapOverride, setWordWrapOverride] = useState<boolean | null>(null);
   const wordWrap = wordWrapOverride ?? defaultWordWrap;
   const canOperatePreview = useEnvironmentScope(environmentId, AuthPreviewOperateScope);
-  const localMachineEnvironmentId = useAtomValue(localMachineEnvironmentIdAtom);
+  const localMachineEnvironmentId = useAtomValue(localMachineEnvironmentIdAtom(environmentId));
   const remoteOpenState = useRemoteOpenState(environmentId);
   const serverConfig = useAtomValue(serverEnvironment.configValueAtom(environmentId));
   const environmentHttpBaseUrl = useEnvironmentHttpBaseUrl(environmentId);
