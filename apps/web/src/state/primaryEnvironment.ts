@@ -12,9 +12,8 @@ export const primaryEnvironmentIdAtom = Atom.make((get) => {
   return null;
 }).pipe(Atom.withLabel("web-primary-environment-id"));
 
-// With Local environment off, a background service can still own the desktop's
-// T3 home. It runs on this machine just as the desktop's own backend would.
-export const desktopHomeEnvironmentIdAtom = Atom.make(readDesktopHomeEnvironmentId).pipe(
-  Atom.keepAlive,
-  Atom.withLabel("web-desktop-home-environment-id"),
-);
+// A background service can create the identity file after this window opens.
+export const desktopHomeEnvironmentIdAtom = Atom.make((get) => {
+  get(environmentCatalog.catalogValueAtom);
+  return readDesktopHomeEnvironmentId();
+}).pipe(Atom.keepAlive, Atom.withLabel("web-desktop-home-environment-id"));
