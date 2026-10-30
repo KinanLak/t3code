@@ -1,4 +1,3 @@
-import type { EnvironmentId } from "@t3tools/contracts";
 import { Atom } from "effect/reactivity";
 
 import { environmentCatalog } from "../connection/catalog";
@@ -18,16 +17,4 @@ export const primaryEnvironmentIdAtom = Atom.make((get) => {
 export const desktopHomeEnvironmentIdAtom = Atom.make(readDesktopHomeEnvironmentId).pipe(
   Atom.keepAlive,
   Atom.withLabel("web-desktop-home-environment-id"),
-);
-
-// WSL-only mode gives the primary its own home, so both can run here at once.
-export const localMachineEnvironmentIdAtom = Atom.family((environmentId: EnvironmentId) =>
-  Atom.make((get) => {
-    const primaryEnvironmentId = get(primaryEnvironmentIdAtom);
-    const desktopHomeEnvironmentId = get(desktopHomeEnvironmentIdAtom);
-    if (environmentId === primaryEnvironmentId || environmentId === desktopHomeEnvironmentId) {
-      return environmentId;
-    }
-    return primaryEnvironmentId ?? desktopHomeEnvironmentId;
-  }).pipe(Atom.withLabel(`web-local-machine-environment-id:${environmentId}`)),
 );

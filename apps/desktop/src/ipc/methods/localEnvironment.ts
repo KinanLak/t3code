@@ -22,10 +22,7 @@ export const getHomeEnvironmentId = makeSyncIpcMethod({
   result: Schema.NullOr(Schema.String),
   handler: Effect.fn("desktop.ipc.localEnvironment.getHomeEnvironmentId")(function* () {
     const environment = yield* DesktopEnvironment.DesktopEnvironment;
-    // The server's environment identity file (apps/server/src/config.ts), absent
-    // until a server has started on this home. Sync IPC handlers run under
-    // Effect.runSync, so the read must not suspend, and must not fail either: a
-    // failed sync handler never sets returnValue and leaves the renderer blocked.
+    // Sync IPC must reply without suspending or failing, including when the identity file is absent.
     const id = yield* DesktopPreReadyFileSystem.make
       .readFileString(environment.path.join(environment.stateDir, "environment-id"))
       .pipe(

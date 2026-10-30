@@ -5,13 +5,14 @@ import type { RemoteOpenMode } from "../../remoteOpen";
 export function shouldShowOpenInPicker(input: {
   readonly activeProjectName: string | undefined;
   readonly activeThreadEnvironmentId: EnvironmentId;
-  readonly localMachineEnvironmentId: EnvironmentId | null;
+  readonly primaryEnvironmentId: EnvironmentId | null;
+  readonly desktopHomeEnvironmentId: EnvironmentId | null;
   readonly remoteOpenMode: RemoteOpenMode;
 }): boolean {
   if (!input.activeProjectName) return false;
   if (
-    input.localMachineEnvironmentId !== null &&
-    input.activeThreadEnvironmentId === input.localMachineEnvironmentId
+    input.activeThreadEnvironmentId === input.primaryEnvironmentId ||
+    input.activeThreadEnvironmentId === input.desktopHomeEnvironmentId
   ) {
     return true;
   }

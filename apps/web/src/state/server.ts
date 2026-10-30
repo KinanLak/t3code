@@ -1,6 +1,5 @@
 import {
   DEFAULT_SERVER_SETTINGS,
-  type EditorId,
   type EnvironmentId,
   type EnvironmentTheme,
   type ServerConfig,
@@ -26,7 +25,7 @@ import { isConnectedWithConfig } from "../components/settings/scopedSettings";
 import { environmentCatalog } from "../connection/catalog";
 import { connectionAtomRuntime } from "../connection/runtime";
 import { environmentAtomList } from "./environmentAtomList";
-import { localMachineEnvironmentIdAtom, primaryEnvironmentIdAtom } from "./primaryEnvironment";
+import { primaryEnvironmentIdAtom } from "./primaryEnvironment";
 import { environmentSession } from "./session";
 import { reuseProvidersIgnoringCheckedAt } from "./serverProviders.logic";
 
@@ -53,7 +52,6 @@ interface PrimaryServerState {
   readonly welcome: ServerLifecycleWelcomePayload | null;
 }
 
-const EMPTY_AVAILABLE_EDITORS: ReadonlyArray<EditorId> = [];
 export const EMPTY_SERVER_PROVIDERS: ReadonlyArray<ServerProvider> = [];
 const EMPTY_PRIMARY_SERVER_STATE: PrimaryServerState = {
   config: null,
@@ -165,17 +163,6 @@ export const primaryServerKeybindingsAtom = createShortcutKeybindingsAtom({
   primaryConfigAtom: primaryServerConfigAtom,
   environmentsAtom: environmentConnectionsAtom,
 }).pipe(Atom.withLabel("web-primary-server-keybindings"));
-
-export const localMachineAvailableEditorsAtom = Atom.family((targetEnvironmentId: EnvironmentId) =>
-  Atom.make((get): ReadonlyArray<EditorId> => {
-    const environmentId = get(localMachineEnvironmentIdAtom(targetEnvironmentId));
-    if (environmentId === null) return EMPTY_AVAILABLE_EDITORS;
-    return (
-      get(serverEnvironment.configValueAtom(environmentId))?.availableEditors ??
-      EMPTY_AVAILABLE_EDITORS
-    );
-  }).pipe(Atom.withLabel(`web-local-machine-available-editors:${targetEnvironmentId}`)),
-);
 
 const EMPTY_ENVIRONMENT_THEMES: ReadonlyArray<EnvironmentTheme> = [];
 

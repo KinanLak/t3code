@@ -226,12 +226,8 @@ import { selectThreadTerminalUiState, useTerminalUiStateStore } from "../termina
 import { useKnownTerminalSessions, useThreadRunningTerminalIds } from "../state/terminalSessions";
 import { useEnvironmentQuery } from "../state/query";
 import { useEnvironmentScope } from "~/state/session";
-import {
-  localMachineAvailableEditorsAtom,
-  primaryServerKeybindingsAtom,
-  serverEnvironment,
-} from "../state/server";
-import { localMachineEnvironmentIdAtom } from "../state/primaryEnvironment";
+import { primaryServerKeybindingsAtom, serverEnvironment } from "../state/server";
+import { desktopHomeEnvironmentIdAtom } from "../state/primaryEnvironment";
 import { threadEnvironment, useThreadFamily } from "../state/threads";
 import { resolveProviderSkillsForCwd } from "@t3tools/client-runtime/providerSkills";
 import { vcsEnvironment } from "../state/vcs";
@@ -1611,15 +1607,15 @@ export default function ChatView(props: ChatViewProps) {
     useAtomValue(serverEnvironment.configValueAtom(environmentId))?.keybindings ??
     DEFAULT_RESOLVED_KEYBINDINGS;
   const openInEnvironmentId = activeThread?.environmentId ?? environmentId;
-  const availableEditors = useAtomValue(localMachineAvailableEditorsAtom(openInEnvironmentId));
-  const localMachineEnvironmentId = useAtomValue(
-    localMachineEnvironmentIdAtom(openInEnvironmentId),
-  );
+  const availableEditors =
+    useAtomValue(serverEnvironment.configValueAtom(openInEnvironmentId))?.availableEditors ?? [];
+  const desktopHomeEnvironmentId = useAtomValue(desktopHomeEnvironmentIdAtom);
   const remoteOpenState = useRemoteOpenState(openInEnvironmentId);
   const showOpenInPicker = shouldShowOpenInPicker({
     activeProjectName: activeProject?.title,
     activeThreadEnvironmentId: openInEnvironmentId,
-    localMachineEnvironmentId,
+    primaryEnvironmentId: primaryEnvironment?.environmentId ?? null,
+    desktopHomeEnvironmentId,
     remoteOpenMode: remoteOpenState.mode,
   });
   useOpenFavoriteEditorShortcut({
